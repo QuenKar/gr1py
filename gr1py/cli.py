@@ -19,13 +19,14 @@ def loads(x):
         asd = gr1c.parse(x)
     else:
         asd = gr1c.parse(x.read())
-
+    # 生成表达式
     symtab, exprtab = util.gen_expr(asd)
     exprtab = util.fill_empty(exprtab)
+    # 获取表达式
     tsys = ts_from_expr(symtab, exprtab)
     return tsys, exprtab
 
-
+# 函数入口
 def main(args=None):
     parser = argparse.ArgumentParser(prog='gr1py')
     parser.add_argument('FILE', nargs='?',
@@ -52,13 +53,16 @@ def main(args=None):
     if args.output_format not in ['json', 'gr1caut', 'dot']:
         print(u'Unrecognized output format, "'+str(args.output_format)+'". Try "-h".')
         return 1
-
     if args.FILE is None:
         f = sys.stdin
     else:
         f = open(args.FILE, 'r')
-
+    # 加载文件获取tsys（transition system）, exprtab（将文件中规约转换后形成的表达式）
     tsys, exprtab = loads(f.read())
+    # print("tsys:")
+    # print(tsys)
+    # print("exprtab:")
+    # print(exprtab)
     if f is not sys.stdin:
         f.close()
 
@@ -70,6 +74,8 @@ def main(args=None):
             print(u'Not realizable.')
             return 3
     else: # Default behavior is to synthesize
+        # 合成函数
+        # print("synthesis")
         strategy = synthesize(tsys, exprtab)
         if strategy is None:
             print(u'Not realizable.')

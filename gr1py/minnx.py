@@ -47,6 +47,9 @@ class NodesView(object):
     def __init__(self):
         self.nodes = dict()
 
+    def __str__(self) -> str:
+        return str(self.nodes)
+
     def __len__(self):
         return len(self.nodes)
 
@@ -72,6 +75,9 @@ class NodesView(object):
 class EdgesView(object):
     def __init__(self):
         self.edges = dict()
+    
+    def __str__(self) -> str:
+        return str(self.edges)
 
     def __contains__(self, k):
         return k in self.edges
@@ -100,14 +106,19 @@ class EdgesView(object):
 
 
 class DiGraph(object):
+    """dictionary-based graph"""
     def __init__(self):
         self.nodes = NodesView()
         self.edges = EdgesView()
+    
+    def __str__(self) -> str:
+        return "nodes:" + str(self.nodes) + "edges:" + str(self.edges)
 
     def number_of_nodes(self):
         return len(self.nodes)
 
     def add_node(self, x, **attr):
+        """添加节点"""
         if attr is None:
             attr = dict()
         if x not in self.nodes:
@@ -124,6 +135,7 @@ class DiGraph(object):
                 self.add_node(nodetuple)
 
     def add_edge(self, x, y, **attr):
+        """添加边"""
         if x not in self.nodes:
             self.add_node(x)
         if y not in self.nodes:
@@ -161,6 +173,7 @@ class DiGraph(object):
         return [u for u in self.predecessors(x)]
 
     def predecessors(self, x):
+        """前继节点"""
         for u, yd in self.edges.items():
             if x in yd.keys():
                 yield u

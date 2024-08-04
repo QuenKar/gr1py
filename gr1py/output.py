@@ -26,7 +26,7 @@ def dumps_json(symtab, strategy):
                                       else '"'+str(v['type'])+'"')
                                     +'}') for v in symtab
                                     if not v['uncontrolled']])+'],\n'
-    outs += ' "nodes": {\n'
+    outs += ' "strategy": {\n'
     first = True
     for nd, attr in strategy.nodes(data=True):
         if first:
