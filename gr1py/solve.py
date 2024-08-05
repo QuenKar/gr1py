@@ -59,20 +59,21 @@ def forallexists_pre(tsys, A):
 def get_winning_set(tsys, return_intermediates=False):
     # S 和 Z都是符号化表示 (1, 1, 0, 0, 0, 1) ...
     S = set(tsys.G.nodes())
-    # print("initial S" + str(S))
-    # print("S len:" + str(len(S)))
+    print("initial S" + str(S))
+    print("S len:" + str(len(S)))
 
     # S的 num_sgoals 个拷贝，在arbiter3里面是3
     # Z从全集，计算最大不动点，逐步收缩
     Z = [S.copy() for i in range(tsys.num_sgoals)]
 
-    # print("initial Z" + str(Z))
-    # print("Z len:" + str(len(Z)))
+    print("initial Z" + str(Z))
+    print("Z len:" + str(len(Z)))
     change_among_Z = True
     while change_among_Z:
         change_among_Z = False
         # 拷贝当前Z作为prev Z
         Z_prev = [this_Z.copy() for this_Z in Z]
+        print("Z_prev"+str(Z_prev))
         if return_intermediates:
             Y_list = [[] for i in range(len(Z))]
             X_list = [[] for i in range(len(Z))]
@@ -184,6 +185,7 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
     assert init_flags.upper() == 'ALL_ENV_EXIST_SYS_INIT', 'Only the initial condition interpretation ALL_ENV_EXIST_SYS_INIT is supported.'
 
     W, Y_list, X_list = get_winning_set(tsys, return_intermediates=True)
+    print("from winning set Y_list=" + str(Y_list))
     print("W" + str(W))
     initial_states = get_initial_states(W, tsys, exprtab, init_flags)
     if initial_states is None:
@@ -191,11 +193,12 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
     print("initial_states:" + str(initial_states))
     # goalnames 是系统目标的名称列表
     goalnames = ['SYSGOAL'+str(i) for i in range(tsys.num_sgoals)]
-
-    #初始化Y_list ：把在W中的状态 存在SYSGOAL[i]的添加进去
+    print("num_sgoals="+str(tsys.num_sgoals))
+    #初始化Y_list ：遍历i，把W中的状态存在"SYSGOAL0|SYSGOAL1|...|SYSGOALi"的状态根据goalmode（0，1，2...）添加进去
     for goalmode in range(tsys.num_sgoals):
         Y_list[goalmode][0] = set([s for s in W if goalnames[goalmode] in tsys.G.nodes[s]['sat']])
-    
+    print("init Y_list[goalmode][0] Y_list=" + str(Y_list))
+
     # 获取strategy
     strategy = DiGraph()
     next_id = len(initial_states)
@@ -219,13 +222,20 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
         如果 j == 0，表示当前状态满足目标，更新模式并检查是否循环。
         如果找到重复节点，移除当前节点并连接到重复节点，继续下一个节点。
         """
+        print("workset=" + str(workset))
         nd = workset.pop()
+
+        
+        print("inner_strategy="+str(strategy))
 
         j = 0
         while j < len(Y_list[strategy.nodes[nd]['mode']]):
             if strategy.nodes[nd]['state'] in Y_list[strategy.nodes[nd]['mode']][j]:
                 break
             j += 1
+
+        print("j="+str(j))
+
         if j == 0:
             assert goalnames[strategy.nodes[nd]['mode']] in tsys.G.nodes[strategy.nodes[nd]['state']]['sat']
             original_mode = strategy.nodes[nd]['mode']

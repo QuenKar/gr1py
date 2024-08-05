@@ -59,10 +59,10 @@ def main(args=None):
         f = open(args.FILE, 'r')
     # 加载文件获取tsys（transition system）, exprtab（将文件中规约转换后形成的表达式）
     tsys, exprtab = loads(f.read())
-    # print("tsys:")
-    # print(tsys)
-    # print("exprtab:")
-    # print(exprtab)
+    print("tsys:")
+    print(tsys)
+    print("exprtab:")
+    print(exprtab)
     if f is not sys.stdin:
         f.close()
 
