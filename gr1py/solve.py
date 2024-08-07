@@ -3,10 +3,10 @@
 from __future__ import absolute_import
 import copy
 
-try:
-    from networkx import DiGraph
-except ImportError:
-    from .minnx import DiGraph
+# try:
+#     from networkx import DiGraph
+# except ImportError:
+from .minnx import DiGraph
 
 from .tstruct import stategen
 
@@ -79,48 +79,65 @@ def get_winning_set(tsys, return_intermediates=False):
             X_list = [[] for i in range(len(Z))]
         # 遍历 Z 中集合
         for i in range(len(Z)):
+            print("i="+str(i))
             # 获取 Z[i]的拷贝作为当前index的prev Z
             this_Z_prev = Z[i].copy()
+            print("this_Z_prev=" + str(this_Z_prev))
             Y = set()
+            print("Y=" + str(Y))
             if return_intermediates:
                 num_sublevels = 0
             # 从Z_prev[i+1]中获取goal_progress
             goal_progress = forallexists_pre(tsys, Z_prev[(i+1) % tsys.num_sgoals])
+            print("goal_progress=" + str(goal_progress))
 
             # goal_progress 再与满足当前系统目标 SYSGOAL[i] 的状态集合取交集。
             goal_progress &= set([s for s in S if 'SYSGOAL'+str(i) in tsys.G.nodes[s]['sat']])
-            # print("after s & goal_progress:" + str(goal_progress))
+            print("After set &, goal_progress=" + str(goal_progress))
 
             while True:
                 # 计算最小不动点集合Y
                 Y_prev = Y.copy()
+                print("Y_prev=" + str(Y_prev))
                 if return_intermediates:
                     Y_list[i].append(Y_prev)
+                    print("Y_list["+str(i)+"]="+str(Y_list[i]))
                     num_sublevels += 1
                 Y = set()
+                print("Y=" + str(Y))
                 Y_exmodal = forallexists_pre(tsys, Y_prev)
+                print("Y_exmodal=" + str(Y_exmodal))
                 # reach_goal_progress是 goal_progress and Y_exmodal的并集
                 reach_goal_progress = goal_progress.union(Y_exmodal)
+                print("reach_goal_progress=" + str(reach_goal_progress))    
                 if return_intermediates:
                     X_list[i].append([])
+                    print("X_list["+str(i)+"]="+str(X_list[i]))
                 for j in range(tsys.num_egoals):
                     # X是状态集合的copy，最大不动点
                     X = S.copy()
+                    print("X=" + str(X))
                     while True:
                         X_prev = X.copy()
+                        print("X_prev=" + str(X_prev))
                         # X 的前集通过 forallexists_pre 计算
                         X = forallexists_pre(tsys, X_prev)
+                        print("X=" + str(X))
                         # 去掉不满足环境目标 ENVGOAL[j] 的状态。
                         X &= set([s for s in S if 'ENVGOAL'+str(j) not in tsys.G.nodes[s]['sat']])
+                        print("After & set, X=" + str(X))
                         # 将 X 和 reach_goal_progress 取并集。
                         X |= reach_goal_progress
+                        print("After | reach_goal_progress, X=" + str(X))
                         # 当X不再变化时退出
                         if X == X_prev:
                             break
                         X &= X_prev
+                        print("After & X_prev, X=" + str(X))
                     if return_intermediates:
                         X_list[i][num_sublevels-1].append(X)
                     Y |= X
+                    print("After | X, Y=" + str(Y))
                 # 当Y不再发生变化的时候，退出循环
                 if Y == Y_prev:
                     if return_intermediates:
@@ -128,7 +145,9 @@ def get_winning_set(tsys, return_intermediates=False):
                         X_list[i].pop()
                     break
                 Y |= Y_prev
+                print("After | Y_prev, Y=" + str(Y))
             Z[i] = Y
+            print("Z["+str(i)+"]="+str(Z[i]))
             # 当Z集合不再变化时退出循环迭代
             if Z[i] != this_Z_prev:
                 change_among_Z = True
@@ -187,6 +206,8 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
     W, Y_list, X_list = get_winning_set(tsys, return_intermediates=True)
     print("from winning set Y_list=" + str(Y_list))
     print("W" + str(W))
+    print("X_list" + str(X_list))
+    print("Y_list" + str(Y_list))
     initial_states = get_initial_states(W, tsys, exprtab, init_flags)
     if initial_states is None:
         return None
@@ -251,12 +272,14 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
                     if (possible_repeat != nd
                         and attr['mode'] == strategy.nodes[nd]['mode']
                         and attr['state'] == strategy.nodes[nd]['state']):
+                        print("possible_repeat="+str(possible_repeat))
                         repeat_found = True
                         for (u,v) in strategy.in_edges(nd):
                             strategy.add_edge(u, possible_repeat)
                         strategy.remove_edges_from(
                             list(strategy.in_edges(nd)))
                         strategy.remove_node(nd)
+                        print("After remove, strategy="+str(strategy))
                         break
                 if repeat_found:
                     continue
@@ -270,7 +293,7 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
                 assert goalnames[strategy.nodes[nd]['mode']] in tsys.G.nodes[strategy.nodes[nd]['state']]['sat']
 
         """
-        遍历环境后继状态 envpost。
+        遍历当前state环境后继状态 envpost。
         找到满足条件的后继状态 next_state。
         如果没有找到后继状态，寻找阻塞状态集合中的状态作为后继状态。
         如果找到匹配的节点，添加边到策略图。
@@ -278,6 +301,8 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
         """
         for envpost in tsys.envtrans[strategy.nodes[nd]['state']]:
             next_state = None
+            # 遍历nd的所有后继状态，检查是否满足环境状态转换 envpost 和控制策略的条件。
+            # 如果找到符合条件的后继状态，则将其设为 next_state。
             for succ_nd in tsys.G.successors(strategy.nodes[nd]['state']):
                 if (tuple([succ_nd[i] for i in tsys.ind_uncontrolled]) == envpost
                     and ((j > 0 and succ_nd in Y_list[strategy.nodes[nd]['mode']][j-1])

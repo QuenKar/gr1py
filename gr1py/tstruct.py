@@ -96,4 +96,4 @@ class AnnTransitionSystem(object):
         self.ind_uncontrolled = [i for i in range(len(symtab)) if symtab[i]['uncontrolled']]
     
     def __str__(self) -> str:
-        return "Graph:" + str(self.G) + "symtab:" + str(self.symtab) + "envtrans:" + str(self.envtrans) + "ind_uncontrollered:" + str(self.ind_uncontrolled) 
+        return "\nGraph:\n" + str(self.G) + "\nsymtab:" + str(self.symtab) + "\nenvtrans:" + str(self.envtrans) + "\nind_uncontrollered:" + str(self.ind_uncontrolled) 
