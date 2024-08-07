@@ -3,10 +3,8 @@
 from __future__ import absolute_import
 import itertools
 
-try:
-    from networkx import DiGraph
-except ImportError:
-    from .minnx import DiGraph
+
+from .minnx import DiGraph
 
 
 def stategen(symtab):
