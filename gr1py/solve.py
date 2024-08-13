@@ -12,6 +12,7 @@ from .tstruct import stategen
 
 
 def forallexists_pre(tsys, A):
+    """获取集合A得前集"""
     tmp = set()
     for s in A:
         # 遍历s的所有prev
@@ -123,10 +124,10 @@ def get_winning_set(tsys, return_intermediates=False):
                         # X 的前集通过 forallexists_pre 计算
                         X = forallexists_pre(tsys, X_prev)
                         print("X=" + str(X))
-                        # 去掉不满足环境目标 ENVGOAL[j] 的状态。
+                        # 去掉 不满足环境目标 ENVGOAL[j] 的状态。
                         X &= set([s for s in S if 'ENVGOAL'+str(j) not in tsys.G.nodes[s]['sat']])
                         print("After & set, X=" + str(X))
-                        # 将 X 和 reach_goal_progress 取并集。
+                        # 向 X 集合添加 reach_goal_progress 集合。
                         X |= reach_goal_progress
                         print("After | reach_goal_progress, X=" + str(X))
                         # 当X不再变化时退出
@@ -240,15 +241,14 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
         """
         从 workset 中取出一个节点 nd。
         找到当前模式下 Y_list 中包含 nd 状态的集合索引 j。
-        如果 j == 0，表示当前状态满足目标，更新模式并检查是否循环。
+        如果 j == 0, 表示当前状态满足目标, 更新模式并检查是否循环。
         如果找到重复节点，移除当前节点并连接到重复节点，继续下一个节点。
         """
         print("workset=" + str(workset))
         nd = workset.pop()
 
-        
         print("inner_strategy="+str(strategy))
-
+        # Y_list索引下标表示mode？？？
         j = 0
         while j < len(Y_list[strategy.nodes[nd]['mode']]):
             if strategy.nodes[nd]['state'] in Y_list[strategy.nodes[nd]['mode']][j]:
@@ -256,7 +256,7 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
             j += 1
 
         print("j="+str(j))
-
+        # 如果 j == 0，表示当前状态满足目标，更新模式并检查是否循环。
         if j == 0:
             assert goalnames[strategy.nodes[nd]['mode']] in tsys.G.nodes[strategy.nodes[nd]['state']]['sat']
             original_mode = strategy.nodes[nd]['mode']
@@ -274,8 +274,11 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
                         and attr['state'] == strategy.nodes[nd]['state']):
                         print("possible_repeat="+str(possible_repeat))
                         repeat_found = True
+                        # 添加边，把指向nd的边复制，使其也指向possible_repeat
+                        # u是nd的前驱节点
                         for (u,v) in strategy.in_edges(nd):
                             strategy.add_edge(u, possible_repeat)
+                        # 删除当前节点的边和节点
                         strategy.remove_edges_from(
                             list(strategy.in_edges(nd)))
                         strategy.remove_node(nd)
@@ -285,17 +288,18 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
                     continue
 
             j = 0
+            # 检查当前mode，节点nd是否在Y_list中
             while j < len(Y_list[strategy.nodes[nd]['mode']]):
                 if strategy.nodes[nd]['state'] in Y_list[strategy.nodes[nd]['mode']][j]:
                     break
                 j += 1
+            # 遍历一轮都没有找到，说明不满足，assert
             if j == 0:
                 assert goalnames[strategy.nodes[nd]['mode']] in tsys.G.nodes[strategy.nodes[nd]['state']]['sat']
 
         """
         遍历当前state环境后继状态 envpost。
         找到满足条件的后继状态 next_state。
-        如果没有找到后继状态，寻找阻塞状态集合中的状态作为后继状态。
         如果找到匹配的节点，添加边到策略图。
         如果没有找到匹配的节点，创建一个新节点并添加到策略图和 workset 中。
         """
@@ -340,7 +344,7 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
                     new_mode = (strategy.nodes[nd]['mode'] + 1) % tsys.num_sgoals
                 else:
                     new_mode = strategy.nodes[nd]['mode']
-                # 添加新的node，设置新的mode,加入workset
+                # 添加新的node，设置新的mode,加入workset，更新strategy
                 workset.append(next_id)
                 strategy.add_node(
                     next_id,
