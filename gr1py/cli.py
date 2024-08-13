@@ -58,6 +58,7 @@ def main(args=None):
     else:
         f = open(args.FILE, 'r')
     # 加载文件获取tsys（transition system）, exprtab（将文件中规约转换后形成的表达式）
+    # 构建Game Arena
     tsys, exprtab = loads(f.read())
     print("tsys:")
     print(tsys)

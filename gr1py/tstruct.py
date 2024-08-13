@@ -54,7 +54,7 @@ def ts_from_expr(symtab, exprtab):
             stated.update(dict(zip(next_identifiers, next_state)))
             if eval(systrans_formula, evalglobals, stated):
                 systrans.append((state, next_state))
-
+    # 构建 Game Arena
     G = DiGraph()
     G.add_edges_from(systrans)
     for nd in G.nodes():
@@ -69,8 +69,8 @@ def ts_from_expr(symtab, exprtab):
                 G.nodes[nd]['sat'].append(subformula)
         for subformula in ['ENVGOAL', 'SYSGOAL']:
             for (i, goalexpr) in enumerate(exprtab[subformula]):
+                # 计算公式，如果为真，添加子公式
                 if eval(goalexpr, evalglobals, stated):
-                    # 计算公式，如果为真，添加子公式
                     G.nodes[nd]['sat'].append(subformula+str(i))
                     
     return AnnTransitionSystem(symtab, G, envtrans,
