@@ -320,6 +320,7 @@ def synthesize(tsys, exprtab, init_flags='ALL_ENV_EXIST_SYS_INIT'):
                     import pdb; pdb.set_trace()
                 blocking_index = None
                 blocking_sets = X_list[strategy.nodes[nd]['mode']][j-1]
+                print("blocking_sets="+str(blocking_sets))
                 for k in range(len(blocking_sets)):
                     if strategy.nodes[nd]['state'] in blocking_sets[k]:
                         blocking_index = k

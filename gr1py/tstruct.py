@@ -48,16 +48,19 @@ def ts_from_expr(symtab, exprtab):
     # print("envtrans:"+str(envtrans))
 
     systrans_formula = '(' + ') and ('.join(exprtab['SYSTRANS']) + ')'
+    print("systrans_formula:"+str(systrans_formula))
     for state in stategen(symtab):
         stated = dict(zip(identifiers, state))
         for next_state in stategen(symtab):
             stated.update(dict(zip(next_identifiers, next_state)))
             if eval(systrans_formula, evalglobals, stated):
                 systrans.append((state, next_state))
+    print("systrans:"+str(systrans))
     # 构建 Game Arena
     G = DiGraph()
     G.add_edges_from(systrans)
     for nd in G.nodes():
+        # print("nd:" + str(nd))
         G.nodes[nd]['sat'] = list()
         # 把 node 中0 1值和r1 r2..g1 g2映射起来，下面的计算把exprtab公式中r1，r2替换成0，1
         stated = dict(zip(identifiers, nd))
